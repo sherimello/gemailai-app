@@ -160,8 +160,13 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
         // User object from Firebase
         final User? user = authResult.user;
 
+        sharedPreferencesHelper.saveStringToSharedPreferences("user_mail", user!.email!);
+
         return user;
       } else {
+        setState(() {
+          signInClicked = !signInClicked;
+        });
         // User canceled the sign-in
         print('Google sign-in aborted.');
         return null;
@@ -284,7 +289,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                       2
                                   : 19,
               child: GestureDetector(
-                onTap: signedIn
+                onTap: signedIn || isOldUser || shouldLoadPromptPage || startIntervalOngoing
                     ? () {}
                     : () {
                         setState(() {

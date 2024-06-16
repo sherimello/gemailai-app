@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:gemailai/classes/shared_preferences_helper.dart';
+import 'package:gemailai/widgets/error_prompt_UI.dart';
 import 'package:gemailai/widgets/text_field.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,17 +19,24 @@ class PromptUI extends StatefulWidget {
 }
 
 class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
-  bool generating = false, mailGenerated = false;
+  bool generating = false, mailGenerated = false, errorEncountered = false;
   double radius = 100;
   late Timer timer;
   late AnimationController _controller;
-  String _response = "";
+  String _response = "", app_password = "", error_message = "error message...", user_mail = "";
   final TextEditingController _textEditingControllerSender =
           TextEditingController(),
       _textEditingControllerReceiver = TextEditingController(),
       _textEditingControllerPrompt = TextEditingController(),
       _textEditingControllerSubject = TextEditingController(),
       _textEditingControllerBody = TextEditingController();
+  SharedPreferencesHelper sharedPreferencesHelper = SharedPreferencesHelper();
+
+  triggerBackError(bool b) {
+    setState(() {
+      errorEncountered = b;
+    });
+  }
 
   Future<void> generateMail(String userInput) async {
     final url = Uri.parse(
@@ -47,37 +56,64 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
       });
     } else {
       setState(() {
-        _response = 'Failed to load response: ${response.statusCode}';
+        errorEncountered = true;
+        error_message = _response;
+        generating = false;
+        _response =
+            'Failed to load response: ${response.statusCode}: ${response.reasonPhrase}';
       });
     }
     print(_response);
   }
 
-  Future<void> sendMail(String subject, body, from_email, to_email, app_password) async {
+  Future<void> sendMail(String subject, String body, String fromEmail, String toEmail, String appPassword) async {
     final url = Uri.parse(
-        'https://gemailai.onrender.com/send?subject=$subject&body=$body&from_email=$from_email&to_email=$to_email&app_password=$app_password');
+        'https://gemailai.onrender.com/send?subject=$subject&body=$body&from_email=$fromEmail&to_email=$toEmail&app_password=$appPassword');
+
     final response = await http.post(url);
 
     if (response.statusCode == 200) {
       setState(() {
-        // Assuming the API returns a JSON object
         final jsonResponse = json.decode(response.body);
-        _response = jsonResponse['message'] ??
-            'No output key in response';
+        _response = jsonResponse['message'] ?? 'No output key in response';
       });
     } else {
       setState(() {
-        _response = 'Failed to load response: ${response.statusCode}';
+        errorEncountered = true;
+        error_message = _response;
+        mailGenerated = false;
+        generating = false;
+        _response = 'Failed to load response: ${response.statusCode}: ${response.reasonPhrase}';
       });
+      // Print detailed error message
+      print('Error ${response.statusCode}: ${response.reasonPhrase}');
+      print('Response body: ${response.body}');
     }
     print(_response);
   }
+
+
 
   initProcessingAnimation() {
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
+  }
+
+  init() async {
+    app_password = (await sharedPreferencesHelper
+        .getStringFromSharedPreferences("app_password"))!;
+    
+    user_mail = (await sharedPreferencesHelper.getStringFromSharedPreferences("user_mail"))!;
+    
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    init();
   }
 
   @override
@@ -111,11 +147,29 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                     SizedBox(
                       height: AppBar().preferredSize.height * .5,
                     ),
-                    CustomTextField(
-                        fieldName: "sender's email",
-                        hint: "your.email@hmail.com",
-                        lines: 1,
-                        textEditingController: _textEditingControllerSender),
+                    Text("your email:",
+                      style: TextStyle(
+                          fontFamily: "SF-Pro",
+                          fontSize: size.width * .035,
+                          color: Colors.white
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 9,
+                    ),
+                    Text(user_mail,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(.35),
+                      fontFamily: "SF-Pro",
+                      // fontStyle: FontStyle.italic,
+                      fontSize: size.width * .055,
+                    ),
+                    ),
+                    // CustomTextField(
+                    //     fieldName: "sender's email",
+                    //     hint: "your.email@hmail.com",
+                    //     lines: 1,
+                    //     textEditingController: _textEditingControllerSender),
                     SizedBox(
                       height: AppBar().preferredSize.height * .25,
                     ),
@@ -186,45 +240,62 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                 },
               )
             : const SizedBox(),
+        errorEncountered
+            ? Container(
+                width: size.width,
+                height: size.height,
+                color: Colors.black.withOpacity(.77),
+              )
+            : const SizedBox(),
         AnimatedPositioned(
           duration: const Duration(milliseconds: 900),
           curve: Curves.fastEaseInToSlowEaseOut,
-          bottom: mailGenerated
-              ? 19
-              : generating
-                  ? (size.height - AppBar().preferredSize.height) / 2
-                  : 0,
-          left: mailGenerated
-              ? 19
-              : generating
-                  ? (size.width - AppBar().preferredSize.height) / 2
-                  : 19,
-          right: mailGenerated
-              ? 19
-              : generating
-                  ? (size.width - AppBar().preferredSize.height) / 2
-                  : 19,
-          top: mailGenerated
-              ? 19 + MediaQuery.of(context).padding.top
-              : generating
-                  ? (size.height - AppBar().preferredSize.height) / 2
-                  : (size.height - AppBar().preferredSize.height),
+          bottom: errorEncountered
+              ? (size.height) / 3.5
+              : mailGenerated
+                  ? 19
+                  : generating
+                      ? (size.height - AppBar().preferredSize.height) / 2
+                      : 0,
+          left: errorEncountered
+              ? 38
+              : mailGenerated
+                  ? 19
+                  : generating
+                      ? (size.width - AppBar().preferredSize.height) / 2
+                      : 19,
+          right: errorEncountered
+              ? 38
+              : mailGenerated
+                  ? 19
+                  : generating
+                      ? (size.width - AppBar().preferredSize.height) / 2
+                      : 19,
+          top: errorEncountered
+              ? (size.height) / 3.5
+              : mailGenerated
+                  ? 19 + MediaQuery.of(context).padding.top
+                  : generating
+                      ? (size.height - AppBar().preferredSize.height) / 2
+                      : (size.height - AppBar().preferredSize.height),
           child: GestureDetector(
-            onTap: () {
-              setState(() {
-                print(_textEditingControllerPrompt.text);
-                generateMail(_textEditingControllerPrompt.text);
-                generating
-                    ? {
-                        _controller.dispose(),
-                        generating = false,
-                      }
-                    : {
-                        initProcessingAnimation(),
-                        generating = true,
-                      };
-              });
-            },
+            onTap: mailGenerated
+                ? () {}
+                : () {
+                    setState(() {
+                      print(_textEditingControllerPrompt.text);
+                      generateMail(_textEditingControllerPrompt.text);
+                      generating
+                          ? {
+                              _controller.dispose(),
+                              generating = false,
+                            }
+                          : {
+                              initProcessingAnimation(),
+                              generating = true,
+                            };
+                    });
+                  },
             child: AnimatedOpacity(
               duration: const Duration(seconds: 1),
               opacity: widget.startButtonClicked ? 1 : 0,
@@ -233,97 +304,118 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                 height: AppBar().preferredSize.height,
                 // width: generating ? AppBar().preferredSize.height : size.width,
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(mailGenerated
+                    borderRadius: BorderRadius.circular(errorEncountered
                         ? 41
-                        : generating
-                            ? 100
-                            : 17),
+                        : mailGenerated
+                            ? 41
+                            : generating
+                                ? 100
+                                : 17),
                     color:
                         mailGenerated ? const Color(0xff000000) : Colors.white),
-                child: mailGenerated
-                    ? Padding(
-                        padding: const EdgeInsets.all(19.0),
-                        child: Stack(
-                          alignment: Alignment.topCenter,
-                          children: [
-                            Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
+                child: errorEncountered
+                    ? ErrorPromptUi(
+                        errorMessage: error_message, f: triggerBackError)
+                    : mailGenerated
+                        ? Padding(
+                            padding: const EdgeInsets.all(19.0),
+                            child: Stack(
+                              alignment: Alignment.topCenter,
                               children: [
-                                CustomTextField(
-                                    fieldName: "subject",
-                                    hint: "",
-                                    lines: 1,
-                                    textEditingController:
-                                        _textEditingControllerSubject),
-                                SizedBox(
-                                  height: AppBar().preferredSize.height * .25,
+                                SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      CustomTextField(
+                                          fieldName: "subject",
+                                          hint: "",
+                                          lines: 1,
+                                          textEditingController:
+                                              _textEditingControllerSubject),
+                                      SizedBox(
+                                        height:
+                                            AppBar().preferredSize.height * .25,
+                                      ),
+                                      CustomTextField(
+                                          fieldName: "body",
+                                          hint: "",
+                                          lines: 10,
+                                          textEditingController:
+                                              _textEditingControllerBody),
+                                    ],
+                                  ),
                                 ),
-                                CustomTextField(
-                                    fieldName: "body",
-                                    hint: "",
-                                    lines: 10,
-                                    textEditingController:
-                                        _textEditingControllerBody),
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      sendMail(
+                                          _textEditingControllerSubject.text,
+                                          _textEditingControllerBody.text,
+                                          user_mail,
+                                          _textEditingControllerReceiver.text,
+                                          app_password);
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(seconds: 1),
+                                      height: AppBar().preferredSize.height,
+                                      // width: generating ? AppBar().preferredSize.height : size.width,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(17),
+                                          color: Colors.white),
+                                      child: Center(
+                                        child: Text.rich(TextSpan(children: [
+                                          const WidgetSpan(
+                                              child: Icon(Icons.send,
+                                                  color: Colors.black),
+                                              alignment:
+                                                  PlaceholderAlignment.middle),
+                                          TextSpan(
+                                            text: "  send",
+                                            style: TextStyle(
+                                                height: 0,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: size.width * .045,
+                                                fontFamily: "SF-Pro",
+                                                color: Colors.black),
+                                          )
+                                        ])),
+                                      ),
+                                    ),
+                                  ),
+                                )
                               ],
                             ),
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: AnimatedContainer(
-                                duration: const Duration(seconds: 1),
-                                height: AppBar().preferredSize.height,
-                                // width: generating ? AppBar().preferredSize.height : size.width,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(17),
-                                    color: Colors.white),
-                                child: Center(
-                                  child: Text.rich(TextSpan(children: [
-                                    const WidgetSpan(
-                                        child: Icon(Icons.send,
-                                            color: Colors.black),
-                                        alignment: PlaceholderAlignment.middle),
-                                    TextSpan(
-                                      text: "  send",
-                                      style: TextStyle(
-                                          height: 0,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: size.width * .045,
-                                          fontFamily: "SF-Pro",
-                                          color: Colors.black),
-                                    )
-                                  ])),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      )
-                    : Center(
-                        child: Text.rich(TextSpan(children: [
-                          WidgetSpan(
-                              child: generating
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.black,
-                                    )
-                                  : Icon(Icons.auto_fix_high,
-                                      color: generating
-                                          ? Colors.white
-                                          : Colors.black),
-                              alignment: PlaceholderAlignment.middle),
-                          TextSpan(
-                            text: generating ? "" : "  generate",
-                            style: TextStyle(
-                                height: 0,
-                                fontWeight: FontWeight.bold,
-                                fontSize: size.width * .045,
-                                fontFamily: "SF-Pro",
-                                color:
-                                    generating ? Colors.white : Colors.black),
                           )
-                        ])),
-                      ),
+                        : Center(
+                            child: Text.rich(TextSpan(children: [
+                              WidgetSpan(
+                                  child: generating
+                                      ? const CircularProgressIndicator(
+                                          color: Colors.black,
+                                        )
+                                      : Icon(Icons.auto_fix_high,
+                                          color: generating
+                                              ? Colors.white
+                                              : Colors.black),
+                                  alignment: PlaceholderAlignment.middle),
+                              TextSpan(
+                                text: generating ? "" : "  generate",
+                                style: TextStyle(
+                                    height: 0,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: size.width * .045,
+                                    fontFamily: "SF-Pro",
+                                    color: generating
+                                        ? Colors.white
+                                        : Colors.black),
+                              )
+                            ])),
+                          ),
               ),
             ),
           ),
