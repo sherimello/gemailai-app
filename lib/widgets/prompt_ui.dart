@@ -19,11 +19,18 @@ class PromptUI extends StatefulWidget {
 }
 
 class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
-  bool generating = false, mailGenerated = false, errorEncountered = false;
+  bool generating = false,
+      mailGenerated = false,
+      errorEncountered = false,
+      sendingMail = false,
+      mailSuccessfullySent = false;
   double radius = 100;
   late Timer timer;
   late AnimationController _controller;
-  String _response = "", app_password = "", error_message = "error message...", user_mail = "";
+  String _response = "",
+      app_password = "",
+      error_message = "error message...",
+      user_mail = "";
   final TextEditingController _textEditingControllerSender =
           TextEditingController(),
       _textEditingControllerReceiver = TextEditingController(),
@@ -34,6 +41,8 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
 
   triggerBackError(bool b) {
     setState(() {
+      _textEditingControllerReceiver.clear();
+      _textEditingControllerPrompt.clear();
       errorEncountered = b;
     });
   }
@@ -56,17 +65,18 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
       });
     } else {
       setState(() {
-        errorEncountered = true;
-        error_message = _response;
-        generating = false;
         _response =
             'Failed to load response: ${response.statusCode}: ${response.reasonPhrase}';
+        error_message = _response;
+        errorEncountered = true;
+        generating = false;
       });
     }
     print(_response);
   }
 
-  Future<void> sendMail(String subject, String body, String fromEmail, String toEmail, String appPassword) async {
+  Future<void> sendMail(String subject, String body, String fromEmail,
+      String toEmail, String appPassword) async {
     final url = Uri.parse(
         'https://gemailai.onrender.com/send?subject=$subject&body=$body&from_email=$fromEmail&to_email=$toEmail&app_password=$appPassword');
 
@@ -74,16 +84,25 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
 
     if (response.statusCode == 200) {
       setState(() {
+        mailSuccessfullySent = true;
+        sendingMail = false;
+
         final jsonResponse = json.decode(response.body);
         _response = jsonResponse['message'] ?? 'No output key in response';
+
+        error_message = _response;
+        errorEncountered = true;
+        mailGenerated = false;
+        generating = false;
       });
     } else {
       setState(() {
-        errorEncountered = true;
+        _response =
+            'Failed to load response: ${response.statusCode}: ${response.reasonPhrase}';
         error_message = _response;
+        errorEncountered = true;
         mailGenerated = false;
         generating = false;
-        _response = 'Failed to load response: ${response.statusCode}: ${response.reasonPhrase}';
       });
       // Print detailed error message
       print('Error ${response.statusCode}: ${response.reasonPhrase}');
@@ -91,8 +110,6 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
     }
     print(_response);
   }
-
-
 
   initProcessingAnimation() {
     _controller = AnimationController(
@@ -104,9 +121,9 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
   init() async {
     app_password = (await sharedPreferencesHelper
         .getStringFromSharedPreferences("app_password"))!;
-    
-    user_mail = (await sharedPreferencesHelper.getStringFromSharedPreferences("user_mail"))!;
-    
+
+    user_mail = (await sharedPreferencesHelper
+        .getStringFromSharedPreferences("user_mail"))!;
   }
 
   @override
@@ -147,23 +164,24 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                     SizedBox(
                       height: AppBar().preferredSize.height * .5,
                     ),
-                    Text("your email:",
+                    Text(
+                      "your email:",
                       style: TextStyle(
                           fontFamily: "SF-Pro",
                           fontSize: size.width * .035,
-                          color: Colors.white
-                      ),
+                          color: Colors.white),
                     ),
                     const SizedBox(
                       height: 9,
                     ),
-                    Text(user_mail,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(.35),
-                      fontFamily: "SF-Pro",
-                      // fontStyle: FontStyle.italic,
-                      fontSize: size.width * .055,
-                    ),
+                    Text(
+                      user_mail,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(.35),
+                        fontFamily: "SF-Pro",
+                        // fontStyle: FontStyle.italic,
+                        fontSize: size.width * .055,
+                      ),
                     ),
                     // CustomTextField(
                     //     fieldName: "sender's email",
@@ -346,12 +364,40 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                                     ],
                                   ),
                                 ),
-                                Positioned(
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
+                                AnimatedPositioned(
+                                  curve: Curves.linearToEaseOut,
+                                  duration: const Duration(milliseconds: 1000),
+                                  bottom: sendingMail
+                                      ? (size.height -
+                                              MediaQuery.of(context)
+                                                  .padding
+                                                  .top -
+                                              AppBar().preferredSize.height) /
+                                          2
+                                      : 0,
+                                  left: sendingMail
+                                      ? (size.width -
+                                              76 -
+                                              AppBar().preferredSize.height) /
+                                          2
+                                      : 0,
+                                  right: sendingMail
+                                      ? (size.width -
+                                              76 -
+                                              AppBar().preferredSize.height) /
+                                          2
+                                      : 0,
+                                  // top: sendingMail ? (size.height - AppBar().preferredSize.height) / 2 : (size.height - AppBar().preferredSize.height),
                                   child: GestureDetector(
                                     onTap: () {
+                                      setState(() {
+                                        sendingMail = true;
+                                      });
+
+                                      // Future.delayed(const Duration(seconds: 2), () => setState(() {
+                                      //   sendingMail = false;
+                                      // }));
+
                                       sendMail(
                                           _textEditingControllerSubject.text,
                                           _textEditingControllerBody.text,
@@ -360,30 +406,60 @@ class _PromptUIState extends State<PromptUI> with TickerProviderStateMixin {
                                           app_password);
                                     },
                                     child: AnimatedContainer(
+                                      curve: Curves.linearToEaseOut,
                                       duration: const Duration(seconds: 1),
                                       height: AppBar().preferredSize.height,
-                                      // width: generating ? AppBar().preferredSize.height : size.width,
+                                      width: sendingMail
+                                          ? AppBar().preferredSize.height
+                                          : size.width,
                                       decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(17),
+                                          borderRadius: BorderRadius.circular(
+                                              sendingMail ? 100 : 17),
                                           color: Colors.white),
-                                      child: Center(
-                                        child: Text.rich(TextSpan(children: [
-                                          const WidgetSpan(
-                                              child: Icon(Icons.send,
-                                                  color: Colors.black),
-                                              alignment:
-                                                  PlaceholderAlignment.middle),
-                                          TextSpan(
-                                            text: "  send",
-                                            style: TextStyle(
-                                                height: 0,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: size.width * .045,
-                                                fontFamily: "SF-Pro",
-                                                color: Colors.black),
-                                          )
-                                        ])),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          AnimatedOpacity(
+                                            curve: Curves.linearToEaseOut,
+                                            duration: const Duration(
+                                                milliseconds: 500),
+                                            opacity: sendingMail ? 1 : 0,
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(9.0),
+                                              child: CircularProgressIndicator(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                          AnimatedOpacity(
+                                            curve: Curves.linearToEaseOut,
+                                            duration: const Duration(
+                                                milliseconds: 500),
+                                            opacity: sendingMail ? 0 : 1,
+                                            child: Center(
+                                              child:
+                                                  Text.rich(TextSpan(children: [
+                                                const WidgetSpan(
+                                                    child: Icon(Icons.send,
+                                                        color: Colors.black),
+                                                    alignment:
+                                                        PlaceholderAlignment
+                                                            .middle),
+                                                TextSpan(
+                                                  text: "  send",
+                                                  style: TextStyle(
+                                                      height: 0,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize:
+                                                          size.width * .045,
+                                                      fontFamily: "SF-Pro",
+                                                      color: Colors.black),
+                                                )
+                                              ])),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),

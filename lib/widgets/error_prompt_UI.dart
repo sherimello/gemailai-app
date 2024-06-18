@@ -38,12 +38,12 @@ class _ErrorPromptUiState extends State<ErrorPromptUi> {
                   ))
                 ],
               ),
-              SizedBox(
+              const SizedBox(
                 height: 11,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 19.0),
-                child: Text(widget.errorMessage + "\nsuggested action: \"check the receiver's mail for any typo and/or check your internet connection.", style: TextStyle(color: Colors.black,
+                child: Text("${widget.errorMessage}\nsuggested action: \"check the receiver's mail for any typo and/or check your internet connection.", style: TextStyle(color: Colors.black,
                 fontSize: size.width * .051
                 ),
                 textAlign: TextAlign.center,
@@ -54,7 +54,7 @@ class _ErrorPromptUiState extends State<ErrorPromptUi> {
               ),
               GestureDetector(
                 onTap: () {
-                  // widget.f(false);
+                  widget.f(false);
                 },
                 child: Container(
                   decoration: BoxDecoration(
