@@ -37,6 +37,13 @@
             {
               "client_id": "121380918902-6us7hkgm5pr59f5f2s8se7atjrrtnm88.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "121380918902-r22p5rk8mujoasircnqtn15754ma05cv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.gemailai"
+              }
             }
           ]
         }
