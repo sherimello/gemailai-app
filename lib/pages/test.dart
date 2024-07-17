@@ -2,6 +2,8 @@ import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 
 class GradientEdgeContainer extends StatefulWidget {
+  const GradientEdgeContainer({super.key});
+
   @override
   _GradientEdgeContainerState createState() => _GradientEdgeContainerState();
 }

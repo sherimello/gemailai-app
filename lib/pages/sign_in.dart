@@ -9,11 +9,10 @@ import 'package:gemailai/pages/home.dart';
 import 'package:gemailai/widgets/prompt_ui.dart';
 import 'package:gemailai/widgets/text_field.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SignIn extends StatefulWidget {
-  const SignIn({Key? key}) : super(key: key);
+  const SignIn({super.key});
 
   @override
   State<SignIn> createState() => _SignInState();

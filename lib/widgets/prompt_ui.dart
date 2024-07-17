@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:gemailai/classes/shared_preferences_helper.dart';
 import 'package:gemailai/widgets/error_prompt_UI.dart';
 import 'package:gemailai/widgets/text_field.dart';

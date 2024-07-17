@@ -445,15 +445,18 @@
 
 import 'dart:convert';
 
+// import 'package:flutter_html/html_parser.dart' as html_parser;
+import 'package:flutter_html/flutter_html.dart' as html_parser;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/iam/v1.dart';
 import 'package:googleapis/gmail/v1.dart';
-import 'classes/gmail_service.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
@@ -461,7 +464,7 @@ FlutterLocalNotificationsPlugin();
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
   initializeNotifications();
 }
 
@@ -487,7 +490,7 @@ Future<void> showNotification(String title, String body) async {
 }
 
 class MyApp extends StatefulWidget {
-   MyApp({super.key});
+   const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -497,6 +500,7 @@ class _MyAppState extends State<MyApp> {
   final googleSignIn = GoogleSignIn(
     scopes: [GmailApi.gmailReadonlyScope]
   );
+  String mailData = "";
   late GoogleSignInAccount? _currentUser;
   ListMessagesResponse mails = ListMessagesResponse();
 
@@ -532,6 +536,101 @@ class _MyAppState extends State<MyApp> {
   //   }
   // }
 
+  // readMails() async {
+  //   final authClient = await googleSignIn.authenticatedClient();
+  //   final gmailApi = GmailApi(authClient!);
+  //
+  //   final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
+  //   setState(() {
+  //     mails = unreadMails;
+  //   });
+  //
+  //   var m = mails.messages;
+  //
+  //   if (m != null && m.isNotEmpty) {
+  //     final latestMail = m.first;
+  //     final messageId = latestMail.id;
+  //     final message = await gmailApi.users.messages.get('me', messageId!, format: 'full');
+  //     final payload = message.payload;
+  //     String bodyText = '';
+  //
+  //     if (payload?.parts != null) {
+  //       var temp = payload?.parts;
+  //       for (var part in temp!) {
+  //         if (part.mimeType == 'text/plain') {
+  //           bodyText += utf8.decode(base64Decode(part.body!.data!));
+  //         }
+  //       }
+  //     } else {
+  //       bodyText = utf8.decode(base64Decode(payload!.body!.data!));
+  //     }
+  //
+  //     setState(() {
+  //       mailData = bodyText;
+  //     });
+  //
+  //     print('Latest new mail body: $bodyText');
+  //   }
+  // }
+
+  // readMails() async {
+  //   final authClient = await googleSignIn.authenticatedClient();
+  //   final gmailApi = GmailApi(authClient!);
+  //
+  //   final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
+  //   setState(() {
+  //     mails = unreadMails;
+  //   });
+  //
+  //   var m = mails.messages;
+  //
+  //   if (m!= null && m.isNotEmpty) {
+  //     final latestMail = m.first;
+  //     final messageId = latestMail.id;
+  //     final message = await gmailApi.users.messages.get('me', messageId!, format: 'raw');
+  //     final rawMessage = message.raw;
+  //
+  //     // Decode the raw message
+  //     final decodedMessage = utf8.decode(base64Decode(rawMessage!));
+  //
+  //     // Split the message into headers and body
+  //     final parts = decodedMessage.split('\r\n\r\n');
+  //
+  //     // Get the body
+  //     final body = parts.last;
+  //
+  //     // Remove any HTML tags
+  //     final plainTextBody = body.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
+  //
+  //         print('Latest new mail body: $plainTextBody');
+  //   }
+  // }
+
+  String htmlContent = '''
+    <!-- Your HTML string goes here -->
+    International dating: open a world of possibilities.
+    
+    <a href="https://example.com" style="text-decoration: none;">Example Link</a>
+    
+    <sup style="font-size: 100% !important;">Superscript</sup>
+    
+    96
+    
+    <style>
+    #outlook a { padding:0; }
+    .es-button { mso-style-priority:100!important; text-decoration:none!important; }
+    /* Other CSS styles */
+    </style>
+    
+    <div>
+      Love is love, no matter where you find it.
+      It's time to broaden your dating horizon.From Colombia to Switzerland international dating opens a world of joyful surprises.
+      Connect instantly with 60 million people from different cultures and backgrounds.Find out how we all speak one language: love.
+    </div>
+  ''';
+
+
+
   readMails() async {
     final authClient = await googleSignIn.authenticatedClient();
     final gmailApi = GmailApi(authClient!);
@@ -543,28 +642,31 @@ class _MyAppState extends State<MyApp> {
 
     var m = mails.messages;
 
-    for (var mail in m!) {
-      final messageId = mail.id;
+    if (m != null && m.isNotEmpty) {
+      final latestMail = m.first;
+      final messageId = latestMail.id;
       final message = await gmailApi.users.messages.get('me', messageId!, format: 'full');
       final payload = message.payload;
       String bodyText = '';
 
-      if (payload?.parts!= null) {
-        var temp = payload?.parts;
-        for (var part in temp!) {
-          if (part.mimeType == 'text/plain') {
+        for (var part in payload!.parts!) {
             bodyText += utf8.decode(base64Decode(part.body!.data!));
-          }
         }
-      } else {
-        bodyText = utf8.decode(base64Decode(payload!.body!.data!));
-      }
 
-      // Check if the mail is new (i.e., has not been read before)
-      if (!mail.labelIds!.contains('INBOX') && mail.labelIds!.contains('UNREAD')) {
-        print('New mail body: $bodyText');
-      }
+      setState(() {
+        mailData = bodyText;
+      });
+
+      print('Latest new mail body: $bodyText');
     }
+  }
+
+
+
+  String _parseHtml(String htmlString) {
+    final document = parse(htmlString);
+    final text = document.body!.text;
+    return text.trim();
   }
 
   Future<void> signInWithGoogle() async {
@@ -590,11 +692,11 @@ class _MyAppState extends State<MyApp> {
       } else {
         // User canceled the sign-in
         print('Google sign-in aborted.');
-        return null;
+        return;
       }
     } catch (error) {
       print('Error signing in with Google: $error');
-      return null;
+      return;
     }
   }
 
@@ -641,19 +743,25 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Gmail Listener'),
         ),
         body: Center(
-          child: ElevatedButton(
-            onPressed: () async {
+          child: ListView(
+            children: [
+              ElevatedButton(
+                onPressed: () async {
 
-              // final emails = await getUnreadEmails();
-              // for (var email in emails) {
-              //   showNotification('New Email', email.snippet ?? 'No content');
-              // }
-              await googleSignInUser();
-              // await _handleSignIn();
-              // await signInWithGoogle();
-              // print(mails.messages?.first.id);
-            },
-            child: const Text('Check for Unread Emails'),
+                  // final emails = await getUnreadEmails();
+                  // for (var email in emails) {
+                  //   showNotification('New Email', email.snippet ?? 'No content');
+                  // }
+                  await googleSignInUser();
+                  // await _handleSignIn();
+                  // await signInWithGoogle();
+                  // print(mails.messages?.first.id);
+                },
+                child: const Text('Check for Unread Emails'),
+              ),
+              SelectableText(mailData,
+              )
+            ],
           ),
         ),
       ),

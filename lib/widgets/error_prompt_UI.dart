@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:gemailai/widgets/prompt_ui.dart';
 
 class ErrorPromptUi extends StatefulWidget {
   final String errorMessage;
