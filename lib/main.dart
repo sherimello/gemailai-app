@@ -41,7 +41,6 @@
 //   }
 // }
 
-
 // import 'dart:async';
 // import 'dart:convert';
 // import 'package:firebase_core/firebase_core.dart';
@@ -204,7 +203,6 @@
 //   }
 // }
 
-
 // import 'dart:async';
 // import 'dart:io';
 // import 'package:firebase_core/firebase_core.dart';
@@ -283,32 +281,29 @@
 //
 //   late AutoRefreshingAuthClient _client;
 
-  // Future<void> _initClient() async {
-  //   final clientSecretJson = jsonDecode(await jsonString);
-  //   final credentials = ServiceAccountCredentials(_googleSignIn.currentUser!.email, ClientId(clientSecretJson['installed']['client_id']), clientSecretJson['installed']['client_secret']);
-  //   // ClientId(_clientId, _clientSecret);
-  //   _client = await clientViaServiceAccount(credentials, [clientSecretJson['web']['redirect_uris'][0]]);
-  // }
+// Future<void> _initClient() async {
+//   final clientSecretJson = jsonDecode(await jsonString);
+//   final credentials = ServiceAccountCredentials(_googleSignIn.currentUser!.email, ClientId(clientSecretJson['installed']['client_id']), clientSecretJson['installed']['client_secret']);
+//   // ClientId(_clientId, _clientSecret);
+//   _client = await clientViaServiceAccount(credentials, [clientSecretJson['web']['redirect_uris'][0]]);
+// }
 
-  // Future<void> _initClient() async {
-  //   final jsonString = await rootBundle.loadString('assets/docs/client_secret.json');
-  //   final clientSecretJson = jsonDecode(jsonString);
-  //
-  //   final clientId = clientSecretJson['installed']['client_id'];
-  //   final clientSecret = clientSecretJson['installed']['client_secret'];
-  //
-  //   final authClient = await clientViaOAuth2(
-  //     clientId,
-  //     clientSecret,
-  //     ['https://mail.google.com/'],
-  //   );
-  //
-  //   final httpClient = http.Client(authClient);
-  //   _client = gmail.v1.GmailApi(httpClient);
-  // }
-
-
-
+// Future<void> _initClient() async {
+//   final jsonString = await rootBundle.loadString('assets/docs/client_secret.json');
+//   final clientSecretJson = jsonDecode(jsonString);
+//
+//   final clientId = clientSecretJson['installed']['client_id'];
+//   final clientSecret = clientSecretJson['installed']['client_secret'];
+//
+//   final authClient = await clientViaOAuth2(
+//     clientId,
+//     clientSecret,
+//     ['https://mail.google.com/'],
+//   );
+//
+//   final httpClient = http.Client(authClient);
+//   _client = gmail.v1.GmailApi(httpClient);
+// }
 
 //   Future<void> _fetchNewMessages() async {
 //     setState(() {
@@ -442,7 +437,6 @@
 // }
 //
 
-
 import 'dart:convert';
 
 // import 'package:flutter_html/html_parser.dart' as html_parser;
@@ -451,6 +445,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:gemailai/pages/notification_callback_for_gmails.dart';
+import 'package:gemailai/pages/test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/gmail/v1.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
@@ -459,312 +455,79 @@ import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
-void main() async{
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // initializeNotifications();
   runApp(const MyApp());
-  initializeNotifications();
 }
 
-void initializeNotifications() {
-  const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('@mipmap/ic_launcher');
+// Future<void> _selectNotification(NotificationResponse payload) async {
+//
+//   // Handle notification tap
+//   // String p = payload.payload!;
+//   // print("innnnn");
+//   // final notificationData = jsonDecode(p);
+//   // final title = notificationData['title'];
+//   // final body = notificationData['body'];
+//
+//   await navigatorKey.currentState!.push(
+//     MaterialPageRoute(
+//       builder: (context) =>
+//           NotificationCallbackForGmails(title: "title", body: "body"),
+//     ),
+//   );
+// }
+//
+//
+//
+//
+// void initializeNotifications() {
+//
+//   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//   FlutterLocalNotificationsPlugin();
+//   flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+//       AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+//
+//   print("jjjjj");
+//   const AndroidInitializationSettings initializationSettingsAndroid =
+//   AndroidInitializationSettings('@mipmap/ic_launcher');
+//
+//   const InitializationSettings initializationSettings =
+//   InitializationSettings(android: initializationSettingsAndroid);
+//
+//   flutterLocalNotificationsPlugin.initialize(initializationSettings,
+//     onDidReceiveNotificationResponse: _selectNotification,);
+// }
 
-  const InitializationSettings initializationSettings =
-  InitializationSettings(android: initializationSettingsAndroid);
-
-  flutterLocalNotificationsPlugin.initialize(initializationSettings);
-}
-
-Future<void> showNotification(String title, String body) async {
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
-  AndroidNotificationDetails(
-      'your_channel_id', 'your_channel_name',
-      importance: Importance.max, priority: Priority.high, showWhen: false);
-  const NotificationDetails platformChannelSpecifics =
-  NotificationDetails(android: androidPlatformChannelSpecifics);
-  await flutterLocalNotificationsPlugin.show(
-      0, title, body, platformChannelSpecifics);
-}
+// Future<void> showNotification(String title, String body) async {
+//   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+//       AndroidNotificationDetails('your_channel_id', 'your_channel_name',
+//           importance: Importance.max, priority: Priority.high, showWhen: false);
+//   const NotificationDetails platformChannelSpecifics =
+//       NotificationDetails(android: androidPlatformChannelSpecifics);
+//   await flutterLocalNotificationsPlugin.show(
+//       0, title, body, platformChannelSpecifics);
+// }
 
 class MyApp extends StatefulWidget {
-   const MyApp({super.key});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final googleSignIn = GoogleSignIn(
-    scopes: [GmailApi.gmailReadonlyScope]
-  );
-  String mailData = "";
-  late GoogleSignInAccount? _currentUser;
-  ListMessagesResponse mails = ListMessagesResponse();
-
-  // readMails() async {
-  //   final authClient = await googleSignIn.authenticatedClient();
-  //   final gmailApi = GmailApi(authClient!);
-  //
-  //   final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
-  //   setState(() {
-  //     mails = unreadMails;
-  //   });
-  //
-  //   var m = mails.messages;
-  //
-  //   for (var mail in m!) {
-  //     final messageId = mail.id;
-  //     final message = await gmailApi.users.messages.get('me', messageId!, format: 'full');
-  //     final payload = message.payload;
-  //     String bodyText = '';
-  //
-  //     if (payload?.parts != null) {
-  //       var temp = payload?.parts;
-  //       for (var part in temp!) {
-  //         if (part.mimeType == 'text/plain') {
-  //           bodyText += utf8.decode(base64Decode(part.body!.data!));
-  //         }
-  //       }
-  //     } else {
-  //       bodyText = utf8.decode(base64Decode(payload!.body!.data!));
-  //     }
-  //
-  //     print('Mail body: $bodyText');
-  //   }
-  // }
-
-  // readMails() async {
-  //   final authClient = await googleSignIn.authenticatedClient();
-  //   final gmailApi = GmailApi(authClient!);
-  //
-  //   final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
-  //   setState(() {
-  //     mails = unreadMails;
-  //   });
-  //
-  //   var m = mails.messages;
-  //
-  //   if (m != null && m.isNotEmpty) {
-  //     final latestMail = m.first;
-  //     final messageId = latestMail.id;
-  //     final message = await gmailApi.users.messages.get('me', messageId!, format: 'full');
-  //     final payload = message.payload;
-  //     String bodyText = '';
-  //
-  //     if (payload?.parts != null) {
-  //       var temp = payload?.parts;
-  //       for (var part in temp!) {
-  //         if (part.mimeType == 'text/plain') {
-  //           bodyText += utf8.decode(base64Decode(part.body!.data!));
-  //         }
-  //       }
-  //     } else {
-  //       bodyText = utf8.decode(base64Decode(payload!.body!.data!));
-  //     }
-  //
-  //     setState(() {
-  //       mailData = bodyText;
-  //     });
-  //
-  //     print('Latest new mail body: $bodyText');
-  //   }
-  // }
-
-  // readMails() async {
-  //   final authClient = await googleSignIn.authenticatedClient();
-  //   final gmailApi = GmailApi(authClient!);
-  //
-  //   final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
-  //   setState(() {
-  //     mails = unreadMails;
-  //   });
-  //
-  //   var m = mails.messages;
-  //
-  //   if (m!= null && m.isNotEmpty) {
-  //     final latestMail = m.first;
-  //     final messageId = latestMail.id;
-  //     final message = await gmailApi.users.messages.get('me', messageId!, format: 'raw');
-  //     final rawMessage = message.raw;
-  //
-  //     // Decode the raw message
-  //     final decodedMessage = utf8.decode(base64Decode(rawMessage!));
-  //
-  //     // Split the message into headers and body
-  //     final parts = decodedMessage.split('\r\n\r\n');
-  //
-  //     // Get the body
-  //     final body = parts.last;
-  //
-  //     // Remove any HTML tags
-  //     final plainTextBody = body.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
-  //
-  //         print('Latest new mail body: $plainTextBody');
-  //   }
-  // }
-
-  String htmlContent = '''
-    <!-- Your HTML string goes here -->
-    International dating: open a world of possibilities.
-    
-    <a href="https://example.com" style="text-decoration: none;">Example Link</a>
-    
-    <sup style="font-size: 100% !important;">Superscript</sup>
-    
-    96
-    
-    <style>
-    #outlook a { padding:0; }
-    .es-button { mso-style-priority:100!important; text-decoration:none!important; }
-    /* Other CSS styles */
-    </style>
-    
-    <div>
-      Love is love, no matter where you find it.
-      It's time to broaden your dating horizon.From Colombia to Switzerland international dating opens a world of joyful surprises.
-      Connect instantly with 60 million people from different cultures and backgrounds.Find out how we all speak one language: love.
-    </div>
-  ''';
-
-
-
-  readMails() async {
-    final authClient = await googleSignIn.authenticatedClient();
-    final gmailApi = GmailApi(authClient!);
-
-    final unreadMails = await gmailApi.users.messages.list('me', q: 'is:unread');
-    setState(() {
-      mails = unreadMails;
-    });
-
-    var m = mails.messages;
-
-    if (m != null && m.isNotEmpty) {
-      final latestMail = m.first;
-      final messageId = latestMail.id;
-      final message = await gmailApi.users.messages.get('me', messageId!, format: 'full');
-      final payload = message.payload;
-      String bodyText = '';
-
-        for (var part in payload!.parts!) {
-            bodyText += utf8.decode(base64Decode(part.body!.data!));
-        }
-
-      setState(() {
-        mailData = bodyText;
-      });
-
-      print('Latest new mail body: $bodyText');
-    }
-  }
-
-
-
-  String _parseHtml(String htmlString) {
-    final document = parse(htmlString);
-    final text = document.body!.text;
-    return text.trim();
-  }
-
-  Future<void> signInWithGoogle() async {
-    // Initialize Firebase
-    // await Firebase.initializeApp();
-
-    try {
-      // Triggering Google sign-in flow
-      final GoogleSignInAccount? googleSignInAccount =
-      await googleSignIn.signIn();
-
-      if (googleSignInAccount != null) {
-        // Google sign-in successful, now authenticate with Firebase
-        final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
-        await readMails();
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-
-      } else {
-        // User canceled the sign-in
-        print('Google sign-in aborted.');
-        return;
-      }
-    } catch (error) {
-      print('Error signing in with Google: $error');
-      return;
-    }
-  }
-
-
-
-  Future<void> _handleSignIn() async {
-    try {
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      final GoogleSignInAuthentication? googleAuth =
-      await googleUser?.authentication;
-
-      readMails();
-
-      // final AuthCredential credential = GoogleAuthProvider.getCredential(
-      //   accessToken: googleAuth?.accessToken,
-      //   idToken: googleAuth?.idToken,
-      // );
-
-      // final FirebaseUser user = await _auth.signInWithCredential(credential);
-      // print("signed in " + user.displayName);
-      // return user;
-    } catch (e) {
-      print('Error signing in: $e');
-    }
-  }
-
-  googleSignInUser() {
-    googleSignIn.signIn();
-    googleSignIn.onCurrentUserChanged.listen((account) {
-      setState(() {
-        _currentUser = account;
-      });
-      if (_currentUser != null) {
-        readMails();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Gmail Listener'),
-        ),
-        body: Center(
-          child: ListView(
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-
-                  // final emails = await getUnreadEmails();
-                  // for (var email in emails) {
-                  //   showNotification('New Email', email.snippet ?? 'No content');
-                  // }
-                  await googleSignInUser();
-                  // await _handleSignIn();
-                  // await signInWithGoogle();
-                  // print(mails.messages?.first.id);
-                },
-                child: const Text('Check for Unread Emails'),
-              ),
-              SelectableText(mailData,
-              )
-            ],
-          ),
-        ),
-      ),
+    return const MaterialApp(
+      home: Test(),
     );
   }
 }

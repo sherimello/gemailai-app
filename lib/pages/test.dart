@@ -1,129 +1,198 @@
-import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
-import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
+import 'dart:convert';
 
-class GradientEdgeContainer extends StatefulWidget {
-  const GradientEdgeContainer({super.key});
+import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis/gmail/v1.dart';
+
+import '../main.dart';
+import 'notification_callback_for_gmails.dart';
+
+class Test extends StatefulWidget {
+  const Test({super.key});
 
   @override
-  _GradientEdgeContainerState createState() => _GradientEdgeContainerState();
+  State<Test> createState() => _TestState();
 }
 
-class _GradientEdgeContainerState extends State<GradientEdgeContainer>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Color?> _colorAnimation1;
-  late Animation<Color?> _colorAnimation2;
+class _TestState extends State<Test> {
+  final googleSignIn = GoogleSignIn(scopes: [GmailApi.gmailReadonlyScope]);
+  String mailData = "";
+  late GoogleSignInAccount? _currentUser;
+  ListMessagesResponse mails = ListMessagesResponse();
 
-  @override
-  void initState() {
-    super.initState();
+  Future<void> _selectNotification(NotificationResponse payload) async {
 
-    _controller = AnimationController(
-      animationBehavior: AnimationBehavior.preserve,
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    )..repeat(reverse: true);
+    // Handle notification tap
+    String p = payload.payload!;
+    print("innnnn:\n$p");
+    List<String> lines = p.split("\n");
 
-    _colorAnimation1 = ColorTween(
-      begin: Colors.white,
-      end: Colors.black,
-    ).animate(_controller);
+    var from = lines[0];
+    var body = "";
 
-    _colorAnimation2 = ColorTween(
-      begin: Colors.green,
-      end: Colors.yellow,
-    ).animate(_controller);
+    lines.removeAt(0);
+
+    for(var l in lines) {
+      body += "$l ";
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            NotificationCallbackForGmails(title: from, body: body),
+      ),
+    );
+  }
+
+
+
+
+  void initializeNotifications() {
+
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+
+    print("jjjjj");
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+      onDidReceiveNotificationResponse: _selectNotification,);
+  }
+
+  Future<void> showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails('your_channel_id', 'your_channel_name',
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: false);
+
+    // Create a BigTextStyleInformation object to make the notification expandable
+    BigTextStyleInformation bigTextStyleInformation = BigTextStyleInformation(
+      body,
+      htmlFormatBigText: false,
+      contentTitle: title,
+      htmlFormatContentTitle: false,
+    );
+
+    // Create a new AndroidNotificationDetails object with the BigTextStyleInformation
+    AndroidNotificationDetails updatedAndroidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'your_channel_id',
+      'your_channel_name',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+      styleInformation: bigTextStyleInformation,
+    );
+
+    NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: updatedAndroidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+        0, title, body, platformChannelSpecifics, payload: "$title\n$body");
+  }
+
+  readMails() async {
+    final authClient = await googleSignIn.authenticatedClient();
+    final gmailApi = GmailApi(authClient!);
+
+    final unreadMails =
+    await gmailApi.users.messages.list('me', q: 'is:unread');
+    setState(() {
+      mails = unreadMails;
+    });
+
+    var m = mails.messages;
+
+    if (m != null && m.isNotEmpty) {
+      final latestMail = m.first;
+      final messageId = latestMail.id;
+      final message =
+      await gmailApi.users.messages.get('me', messageId!, format: 'full');
+      final payload = message.payload;
+      var sender = "";
+      String bodyText = '';
+
+      // Get the sender from the payload headers
+      for (var header in payload!.headers!) {
+        if (header.name == 'From') {
+          sender = header.value!;
+          break;
+        }
+      }
+
+      for (var part in payload!.parts!) {
+        bodyText += utf8.decode(base64Decode(part.body!.data!));
+      }
+
+      setState(() {
+        mailData = bodyText;
+      });
+
+      initializeNotifications();
+      showNotification(sender, mailData);
+
+      print('Latest new mail body: $bodyText');
+    }
+  }
+
+  googleSignInUser() {
+    googleSignIn.signIn();
+    googleSignIn.onCurrentUserChanged.listen((account) {
+      setState(() {
+        _currentUser = account;
+      });
+      if (_currentUser != null) {
+        readMails();
+      }
+    });
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initializeNotifications();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 555),
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  offset: const Offset(-10, -10),
-                  blurRadius: 60,
-                  spreadRadius: 3,
-                  blurStyle: BlurStyle.inner,
-                  color: _colorAnimation1.value!,
-                  inset: true,
-                ),
-                BoxShadow(
-                  offset: const Offset(10, 10),
-                  blurRadius: 60,
-                  blurStyle: BlurStyle.inner,
-                  spreadRadius: 3,
-                  color: _colorAnimation1.value!,
-                  inset: true,
-                ),
-              ],
-            ),
-          );
-        },
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Gmail Listener'),
+        ),
+        body: Center(
+          child: ListView(
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  // final emails = await getUnreadEmails();
+                  // for (var email in emails) {
+                  //   showNotification('New Email', email.snippet ?? 'No content');
+                  // }
+                  await googleSignInUser();
+                  // await _handleSignIn();
+                  // await signInWithGoogle();
+                  // print(mails.messages?.first.id);
+                },
+                child: const Text('Check for Unread Emails'),
+              ),
+              SelectableText(
+                mailData,
+              )
+            ],
+          ),
+        ),
       ),
     );
-  }
-}
-
-class GradientEdgePainter extends CustomPainter {
-  final Color color1;
-  final Color color2;
-
-  GradientEdgePainter({required this.color1, required this.color2});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint();
-
-    // Top gradient
-    paint.shader = LinearGradient(
-      colors: [color1, Colors.transparent],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.1));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height * 0.1), paint);
-
-    // Bottom gradient
-    paint.shader = LinearGradient(
-      colors: [Colors.transparent, color2],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    ).createShader(Rect.fromLTWH(0, size.height * 0.9, size.width, size.height * 0.1));
-    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.9, size.width, size.height * 0.1), paint);
-
-    // Left gradient
-    paint.shader = LinearGradient(
-      colors: [color1, Colors.transparent],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    ).createShader(Rect.fromLTWH(0, 0, size.width * 0.1, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width * 0.1, size.height), paint);
-
-    // Right gradient
-    paint.shader = LinearGradient(
-      colors: [Colors.transparent, color2],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    ).createShader(Rect.fromLTWH(size.width * 0.9, 0, size.width * 0.1, size.height));
-    canvas.drawRect(Rect.fromLTWH(size.width * 0.9, 0, size.width * 0.1, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }
