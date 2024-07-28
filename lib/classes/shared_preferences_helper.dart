@@ -21,7 +21,7 @@ class SharedPreferencesHelper {
     return prefs.getBool(key);
   }
 
-  Future<bool?> getKeyExistingApproval(String key) async {
+  Future<bool> getKeyExistingApproval(String key) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(key);
   }
