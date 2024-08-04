@@ -445,8 +445,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:gemailai/pages/dashboard.dart';
 import 'package:gemailai/pages/notification_callback_for_gmails.dart';
+import 'package:gemailai/pages/sign_in.dart';
 import 'package:gemailai/pages/test.dart';
+import 'package:gemailai/pages/test2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/gmail/v1.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
@@ -461,6 +464,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   // initializeNotifications();
@@ -527,7 +531,9 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: Test(),
+      home: NotificationCallbackForGmails(title: "sender <drive2nd@gmail.com>", body: "hey there man! meet me up at the coming thursday, 3 pm okay?"),
+      // home: DashBoard(),
+      // home: Test2(),
     );
   }
 }

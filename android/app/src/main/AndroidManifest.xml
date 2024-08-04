@@ -3,6 +3,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!--
+      Permission to use here depends on the value you picked for foregroundServiceType - see the Android documentation.
+      Eg, if you picked 'location', use 'android.permission.FOREGROUND_SERVICE_LOCATION'
+    -->
+<!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_..." />-->
     <application
         android:label="gemailai"
         android:name="${applicationName}"
@@ -42,7 +50,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data android:name="clientId" android:value="240715442035-hr7el06qvltgt23fronnppkag8qtkheh.apps.googleusercontent.com" />
 
+        <service
+            android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:foregroundServiceType="dataSync"
+            />
 <!--        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />-->
 <!--        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />-->
 <!--        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">-->
@@ -63,6 +76,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+            <data android:mimeType="vnd.android.cursor.item/event" />
         </intent>
     </queries>
 </manifest>

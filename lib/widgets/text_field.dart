@@ -16,46 +16,52 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
     var size = MediaQuery.of(context).size;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.fieldName,
-        style: TextStyle(
-          fontFamily: "SF-Pro",
-          fontSize: size.width * .035,
-          color: Colors.white
-        ),
-        ),
-        const SizedBox(
-          height: 9,
-        ),
-        TextField(
-          controller: widget.textEditingController,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.15), // Set opacity here
-            hintText: widget.hint,
-            hintStyle: TextStyle(
-              color: Colors.white.withOpacity(.35),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(17),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "\n${widget.fieldName}",
+            style: TextStyle(
               fontFamily: "SF-Pro",
-              // fontStyle: FontStyle.italic,
-              fontSize: size.width * .041,
+              fontSize: size.width * .035,
+              color: Colors.white
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(17.0),
-              borderSide: BorderSide.none,
             ),
-          ),
-          keyboardType: widget.lines > 1 ?  TextInputType.multiline :TextInputType.emailAddress,
-          maxLines: widget.lines, // Set the maximum lines
-          minLines: widget.lines, // Set the minimum lines
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: "SF-Pro",
-            fontSize: size.width * .045
-          ),
+            const SizedBox(
+              height: 9,
+            ),
+            TextField(
+              controller: widget.textEditingController,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.15), // Set opacity here
+                hintText: widget.hint,
+                hintStyle: TextStyle(
+                  color: Colors.white.withOpacity(.35),
+                  fontFamily: "SF-Pro",
+                  // fontStyle: FontStyle.italic,
+                  fontSize: size.width * .037,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(21.0),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              keyboardType: widget.lines > 1 ?  TextInputType.multiline :TextInputType.emailAddress,
+              maxLines: widget.lines, // Set the maximum lines
+              minLines: widget.lines, // Set the minimum lines
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: "SF-Pro",
+                fontSize: size.width * .037
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
