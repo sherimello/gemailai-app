@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:gemailai/classes/shared_preferences_helper.dart';
+import 'package:gemailai/pages/dashboard.dart';
 import 'package:gemailai/pages/gmail_assistant_success_confirmation.dart';
 import 'package:gemailai/pages/home.dart';
+import 'package:gemailai/pages/test2.dart';
 import 'package:gemailai/widgets/prompt_ui.dart';
 import 'package:gemailai/widgets/text_field.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -482,7 +485,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 19),
                                             child: GestureDetector(
-                                              onTap: () {
+                                              onTap: () async {
                                                 SharedPreferencesHelper()
                                                     .saveStringToSharedPreferences(
                                                         "app_password",
@@ -492,12 +495,17 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                                 setState(() {
                                                   proceed = true;
                                                 });
-                                                timer = Timer(
-                                                    const Duration(seconds: 1),
-                                                    () => setState(() {
-                                                          shouldLoadPromptPage =
-                                                              true;
-                                                        }));
+                                                var authClient = await (googleSignIn.authenticatedClient()).then((v) {
+                                                  timer = Timer(
+                                                      const Duration(seconds: 1),
+                                                          () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (builder) => Test2()))
+                                                  );
+                                                });
+
+                                                    // () => setState(() {
+                                                    //       shouldLoadPromptPage =
+                                                    //           true;
+                                                    //     }));
                                                 timerForBorderRadiusTriggerInit =
                                                     Timer(
                                                         const Duration(

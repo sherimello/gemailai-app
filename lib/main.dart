@@ -445,6 +445,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:gemailai/pages/bleh.dart';
+import 'package:gemailai/pages/code_feature_test_ui.dart';
 import 'package:gemailai/pages/dashboard.dart';
 import 'package:gemailai/pages/notification_callback_for_gmails.dart';
 import 'package:gemailai/pages/sign_in.dart';
@@ -453,6 +455,7 @@ import 'package:gemailai/pages/test2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/gmail/v1.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:googleapis_auth/auth.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
@@ -531,9 +534,11 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: NotificationCallbackForGmails(title: "sender <drive2nd@gmail.com>", body: "hey there man! meet me up at the coming thursday, 3 pm okay?"),
-      // home: DashBoard(),
+      // home: FeatureWidget(data: [],),
+      // home: NotificationCallbackForGmails(title: "sender <drive2nd@gmail.com>", body: "hey there man! meet me up at the coming thursday, 3 pm okay?"),
+      home: DashBoard(),
       // home: Test2(),
+      // home: Bleh(),
     );
   }
 }
