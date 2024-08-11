@@ -1,11 +1,15 @@
 import 'dart:async';
 
+import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:gemailai/classes/shared_preferences_helper.dart';
+import 'package:gemailai/pages/dashboard.dart';
+import 'package:gemailai/pages/gmail_assistant_success_confirmation.dart';
 import 'package:gemailai/pages/home.dart';
+import 'package:gemailai/pages/test2.dart';
 import 'package:gemailai/widgets/prompt_ui.dart';
 import 'package:gemailai/widgets/text_field.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -45,6 +49,16 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
       timerForStartAwaitTrigger = Timer(const Duration(seconds: 0), () {}),
       timerForAwaitingOldUserTrigger = Timer(const Duration(seconds: 0), () {});
 
+  double textOpacity = 0;
+  Timer t = Timer(Duration.zero, (){});
+
+  triggerTextOpacity() {
+    t = Timer(const Duration(milliseconds: 500), () =>
+        setState(() {
+          textOpacity = 1;
+        }));
+  }
+
   signOut() async {
     try {
       // Sign out from Google
@@ -69,36 +83,36 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
 
   checkUserState() async {
     timerForStartAwaitTrigger = Timer(const Duration(seconds: 3), () async {
-      await sharedPreferencesHelper.getKeyExistingApproval("isOldUser") == true
-          ? isOldUser = (await sharedPreferencesHelper
-              .getBoolFromSharedPreferences("isOldUser"))!
-          : isOldUser = false;
+      // await sharedPreferencesHelper.getKeyExistingApproval("isOldUser") == true
+      //     ? isOldUser = (await sharedPreferencesHelper
+      //         .getBoolFromSharedPreferences("isOldUser"))!
+      //     : isOldUser = false;
 
       setState(() {
         startIntervalOngoing = false;
-        isOldUser = isOldUser;
+        // isOldUser = isOldUser;
       });
 
-      if (isOldUser) {
-        timerForAwaitingOldUserTrigger =
-            Timer(const Duration(seconds: 2), () {
-              setState(() {
-                shouldLoadPromptPage = true;
-              });
-              Future.delayed(const Duration(milliseconds: 755), () {
-                setState((){
-                  triggerBorderRadius = true;
-                });
-              });
-            });
-      }
+      // if (isOldUser) {
+      //   timerForAwaitingOldUserTrigger =
+      //       Timer(const Duration(seconds: 2), () {
+      //         setState(() {
+      //           shouldLoadPromptPage = true;
+      //         });
+      //         Future.delayed(const Duration(milliseconds: 755), () {
+      //           setState((){
+      //             triggerBorderRadius = true;
+      //           });
+      //         });
+      //       });
+      // }
     });
   }
 
   @override
   void initState() {
     super.initState();
-
+    triggerTextOpacity();
     signOut();
 
     checkUserState();
@@ -181,7 +195,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
     var size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         top: !shouldLoadPromptPage,
@@ -231,11 +245,27 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                   child: AnimatedOpacity(
                     curve: Curves.linearToEaseOut,
                     duration: const Duration(milliseconds: 1000),
-                    opacity: signInClicked ? 0 : 1,
-                    child: Image.asset(
-                      "assets/images/app_icon1.png",
-                      height: size.width * .2,
-                    ),
+                    opacity: signInClicked ? 0 : textOpacity,
+                    child: Text.rich(
+                        textAlign: TextAlign.center,
+                        TextSpan(children: [
+                          TextSpan(
+                            text: "hello there,",
+                            style: TextStyle(
+                                fontFamily: "SF-Pro",
+                                fontWeight: FontWeight.bold,
+                                color: Colors.purpleAccent,
+                                fontSize: size.width * .13),
+                          ),
+                          TextSpan(
+                            text: "\nlet\'s get you all set up...",
+                            style: TextStyle(
+                                fontFamily: "SF-Pro",
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: size.width * .0515),
+                          ),
+                        ])),
                   ),
                 ),
                 SizedBox(
@@ -338,10 +368,10 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                         ? 55
                                         : signInClicked
                                             ? 100
-                                            : 17),
+                                            : 31),
                     color: startIntervalOngoing || proceed
                         ? Colors.transparent
-                        : Colors.black,
+                        : signInClicked ? Colors.black : Colors.white,
                     boxShadow: const [],
                   ),
                   child: Stack(
@@ -455,7 +485,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 19),
                                             child: GestureDetector(
-                                              onTap: () {
+                                              onTap: () async {
                                                 SharedPreferencesHelper()
                                                     .saveStringToSharedPreferences(
                                                         "app_password",
@@ -465,12 +495,17 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                                 setState(() {
                                                   proceed = true;
                                                 });
-                                                timer = Timer(
-                                                    const Duration(seconds: 1),
-                                                    () => setState(() {
-                                                          shouldLoadPromptPage =
-                                                              true;
-                                                        }));
+                                                var authClient = await (googleSignIn.authenticatedClient()).then((v) {
+                                                  timer = Timer(
+                                                      const Duration(seconds: 1),
+                                                          () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (builder) => Test2()))
+                                                  );
+                                                });
+
+                                                    // () => setState(() {
+                                                    //       shouldLoadPromptPage =
+                                                    //           true;
+                                                    //     }));
                                                 timerForBorderRadiusTriggerInit =
                                                     Timer(
                                                         const Duration(
@@ -527,7 +562,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                               color: startIntervalOngoing ||
                                                       isOldUser
                                                   ? Colors.transparent
-                                                  : Colors.white),
+                                                  : Colors.black),
                                         )
                                       ])),
                           ),
@@ -540,7 +575,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                               child: isOldUser ? SizedBox(
                                   height: size.height,
                                   width: size.width,
-                                  child: const PromptUI(startButtonClicked: true)) : const Home())
+                                  child: const PromptUI(startButtonClicked: true)) : const GmailAssistantSuccessConfirmation())
                           : const SizedBox()
                     ],
                   ),
