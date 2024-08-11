@@ -91,7 +91,7 @@ class _NotificationCallbackForGmailsState
     });
 
     final url = Uri.parse(
-        'http://192.168.0.213:5000/send?subject=$subject&body=$body&from_email=$fromEmail&to_email=$toEmail&app_password=$appPassword');
+        'http://192.168.0.236:5000/send?subject=$subject&body=$body&from_email=$fromEmail&to_email=$toEmail&app_password=$appPassword');
 
     final response = await http.post(url);
 

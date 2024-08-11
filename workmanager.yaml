@@ -1,0 +1,5 @@
+tasks:
+  myTask:
+    periodic:
+      frequency:
+        Duration(seconds: 10) # Set your desired interval
