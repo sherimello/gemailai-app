@@ -20,7 +20,8 @@ class _FeatureCardState extends State<FeatureCard> {
   @override
   Widget build(BuildContext context) {
 
-    var size =MediaQuery.of(context).size;
+    var size =MediaQuery.of(context).size,
+    appBarHeight = AppBar().preferredSize.height;
 
     return Flexible(
       flex: 1,
